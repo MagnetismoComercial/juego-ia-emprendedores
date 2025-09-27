@@ -1,0 +1,426 @@
+index.html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Clasificación de Animales</title>
+    <style>
+        body {
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title {
+            color: #4a5568;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            background: #e2e8f0;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .score {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin: 10px 0;
+        }
+
+        .animals-container {
+            background: #f7fafc;
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            min-height: 120px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .animal-item {
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 25px;
+            cursor: grab;
+            user-select: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .animal-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .animal-item:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+
+        .categories-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .category {
+            background: #edf2f7;
+            border: 3px solid #cbd5e0;
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 150px;
+            transition: all 0.3s ease;
+        }
+
+        .category.drag-over {
+            background: #e6fffa;
+            border-color: #38b2ac;
+            transform: scale(1.02);
+        }
+
+        .category-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 10px;
+        }
+
+        .category-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .feedback.correct {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+        }
+
+        .feedback.incorrect {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+        }
+
+        .feedback.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 20px auto;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .completion-message {
+            text-align: center;
+            font-size: 2rem;
+            color: #48bb78;
+            font-weight: bold;
+            margin: 20px 0;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .completion-message.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .categories-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .animal-item {
+                min-width: 100px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1 class="title">🤖 Clasificación de Herramientas de IA 🚀</h1>
+            <p style="color: #666; font-size: 1.1rem; margin-bottom: 20px;">Arrastra cada herramienta a su categoría correcta según tu ebook</p>
+            <div class="score">Puntuación: <span id="score">0</span>/15</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="animals-container" id="animalsContainer">
+            <div class="animal-item" draggable="true" data-category="automatizacion">📧 Mailchimp</div>
+            <div class="animal-item" draggable="true" data-category="ventas">🎯 HubSpot CRM</div>
+            <div class="animal-item" draggable="true" data-category="gestion">📊 Tableau</div>
+            <div class="animal-item" draggable="true" data-category="automatizacion">🤖 Zapier</div>
+            <div class="animal-item" draggable="true" data-category="ventas">✍️ Copy.ai</div>
+            <div class="animal-item" draggable="true" data-category="gestion">💰 QuickBooks AI</div>
+            <div class="animal-item" draggable="true" data-category="automatizacion">💬 Chatfuel</div>
+            <div class="animal-item" draggable="true" data-category="ventas">🔍 Salesforce Einstein</div>
+            <div class="animal-item" draggable="true" data-category="gestion">📈 Power BI</div>
+            <div class="animal-item" draggable="true" data-category="automatizacion">📱 Hootsuite</div>
+            <div class="animal-item" draggable="true" data-category="ventas">🎨 Canva Magic Write</div>
+            <div class="animal-item" draggable="true" data-category="gestion">📦 TradeGecko AI</div>
+            <div class="animal-item" draggable="true" data-category="automatizacion">⚡ IFTTT</div>
+            <div class="animal-item" draggable="true" data-category="ventas">📝 Jasper AI</div>
+            <div class="animal-item" draggable="true" data-category="gestion">🔮 Forecast.app</div>
+        </div>
+
+        <div class="categories-container">
+            <div class="category" data-category="automatizacion">
+                <div class="category-title">⚙️ Automatización de Tareas</div>
+                <div class="category-items" id="automatizacion"></div>
+            </div>
+            <div class="category" data-category="ventas">
+                <div class="category-title">💼 Ventas y Marketing</div>
+                <div class="category-items" id="ventas"></div>
+            </div>
+            <div class="category" data-category="gestion">
+                <div class="category-title">📋 Gestión del Negocio</div>
+                <div class="category-items" id="gestion"></div>
+            </div>
+        </div>
+
+        <div class="completion-message" id="completionMessage">
+            🎉 ¡Felicidades! Dominas las herramientas de IA para emprendedores 🚀
+        </div>
+
+        <button class="reset-btn" onclick="resetGame()">🔄 Reiniciar Juego</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <script>
+        let score = 0;
+        let totalItems = 15;
+        let draggedElement = null;
+
+        // Mezclar herramientas al cargar
+        function shuffleAnimals() {
+            const container = document.getElementById('animalsContainer');
+            const animals = Array.from(container.children);
+            
+            for (let i = animals.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [animals[i], animals[j]] = [animals[j], animals[i]];
+            }
+            
+            animals.forEach(animal => container.appendChild(animal));
+        }
+
+        // Eventos de arrastrar
+        document.addEventListener('dragstart', function(e) {
+            if (e.target.classList.contains('animal-item')) {
+                draggedElement = e.target;
+                e.target.style.opacity = '0.5';
+            }
+        });
+
+        document.addEventListener('dragend', function(e) {
+            if (e.target.classList.contains('animal-item')) {
+                e.target.style.opacity = '1';
+            }
+        });
+
+        document.addEventListener('dragover', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('dragenter', function(e) {
+            if (e.target.closest('.category')) {
+                e.target.closest('.category').classList.add('drag-over');
+            }
+        });
+
+        document.addEventListener('dragleave', function(e) {
+            if (e.target.closest('.category')) {
+                e.target.closest('.category').classList.remove('drag-over');
+            }
+        });
+
+        document.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const category = e.target.closest('.category');
+            
+            if (category && draggedElement) {
+                category.classList.remove('drag-over');
+                
+                const categoryType = category.dataset.category;
+                const animalCategory = draggedElement.dataset.category;
+                
+                if (categoryType === animalCategory) {
+                    // Respuesta correcta
+                    const categoryItems = category.querySelector('.category-items');
+                    categoryItems.appendChild(draggedElement);
+                    draggedElement.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
+                    
+                    score++;
+                    updateScore();
+                    
+                    const correctMessages = [
+                        '¡Perfecto! 🎯 Esa herramienta va ahí',
+                        '¡Excelente! 🚀 Conoces bien la IA',
+                        '¡Correcto! 💡 Dominas el tema',
+                        '¡Genial! ⭐ Sigue así'
+                    ];
+                    const randomMessage = correctMessages[Math.floor(Math.random() * correctMessages.length)];
+                    showFeedback(randomMessage, 'correct');
+                    
+                    if (score === totalItems) {
+                        setTimeout(() => {
+                            document.getElementById('completionMessage').classList.add('show');
+                        }, 1000);
+                    }
+                } else {
+                    // Respuesta incorrecta
+                    const incorrectMessages = [
+                        '🤔 Revisa el módulo correspondiente',
+                        '💭 Piensa en qué hace esa herramienta',
+                        '📚 Consulta tu ebook de IA',
+                        '🎯 ¡Inténtalo de nuevo!'
+                    ];
+                    const randomMessage = incorrectMessages[Math.floor(Math.random() * incorrectMessages.length)];
+                    showFeedback(randomMessage, 'incorrect');
+                    
+                    // Efecto de vibración
+                    draggedElement.style.animation = 'shake 0.5s ease-in-out';
+                    setTimeout(() => {
+                        draggedElement.style.animation = '';
+                    }, 500);
+                }
+                
+                draggedElement = null;
+            }
+        });
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            const progressPercent = (score / totalItems) * 100;
+            document.getElementById('progressFill').style.width = progressPercent + '%';
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `feedback ${type}`;
+            feedback.classList.add('show');
+            
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 1500);
+        }
+
+        function resetGame() {
+            score = 0;
+            updateScore();
+            
+            // Mover todas las herramientas de vuelta al contenedor principal
+            const animalsContainer = document.getElementById('animalsContainer');
+            const allAnimals = document.querySelectorAll('.animal-item');
+            
+            allAnimals.forEach(animal => {
+                animal.style.background = 'linear-gradient(135deg, #ffd89b 0%, #19547b 100%)';
+                animalsContainer.appendChild(animal);
+            });
+            
+            // Ocultar mensaje de completación
+            document.getElementById('completionMessage').classList.remove('show');
+            
+            // Mezclar herramientas
+            shuffleAnimals();
+        }
+
+        // Agregar animación de vibración
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                75% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Inicializar juego
+        shuffleAnimals();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'985d3adb7498ec87',t:'MTc1ODk5OTQ3OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
